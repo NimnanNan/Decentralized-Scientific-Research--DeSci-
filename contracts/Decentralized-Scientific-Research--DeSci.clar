@@ -11,9 +11,10 @@
 (define-data-var next-research-id uint u1)
 (define-data-var next-funding-pool-id uint u1)
 (define-data-var next-review-id uint u1)
+(define-data-var next-milestone-id uint u1)
 
-(define-map research-proposals 
-    uint 
+(define-map research-proposals
+    uint
     {
         researcher: principal,
         title: (string-ascii 256),
@@ -21,19 +22,21 @@
         funding-goal: uint,
         status: (string-ascii 32),
         created-at: uint,
-        published-hash: (optional (string-ascii 64))
+        published-hash: (optional (string-ascii 64)),
+        pool-id: (optional uint)
     }
 )
 
-(define-map funding-pools 
-    uint 
+(define-map funding-pools
+    uint
     {
         research-id: uint,
         creator: principal,
         total-funded: uint,
         funding-goal: uint,
         deadline: uint,
-        is-active: bool
+        is-active: bool,
+        released: uint
     }
 )
 
@@ -54,8 +57,8 @@
     }
 )
 
-(define-map researcher-profiles 
-    principal 
+(define-map researcher-profiles
+    principal
     {
         name: (string-ascii 128),
         institution: (string-ascii 256),
@@ -63,6 +66,24 @@
         total-funded: uint,
         publications-count: uint
     }
+)
+
+(define-map milestones
+    uint
+    {
+        research-id: uint,
+        pool-id: uint,
+        description: (string-ascii 256),
+        amount: uint,
+        status: (string-ascii 32),
+        created-at: uint,
+        approved-amount: uint
+    }
+)
+
+(define-map milestone-approvals
+    {milestone-id: uint, funder: principal}
+    bool
 )
 
 (define-read-only (get-research-proposal (research-id uint))
@@ -97,6 +118,18 @@
     (var-get next-review-id)
 )
 
+(define-read-only (get-milestone (milestone-id uint))
+    (map-get? milestones milestone-id)
+)
+
+(define-read-only (get-milestone-approval (milestone-id uint) (funder principal))
+    (map-get? milestone-approvals {milestone-id: milestone-id, funder: funder})
+)
+
+(define-read-only (get-current-milestone-id)
+    (var-get next-milestone-id)
+)
+
 (define-public (create-researcher-profile (name (string-ascii 128)) (institution (string-ascii 256)))
     (begin
         (asserts! (is-none (map-get? researcher-profiles tx-sender)) ERR_ALREADY_EXISTS)
@@ -122,7 +155,8 @@
             funding-goal: funding-goal,
             status: "proposed",
             created-at: stacks-block-height,
-            published-hash: none
+            published-hash: none,
+            pool-id: none
         })
         (var-set next-research-id (+ research-id u1))
         (ok research-id)
@@ -141,9 +175,10 @@
             total-funded: u0,
             funding-goal: (get funding-goal research),
             deadline: deadline,
-            is-active: true
+            is-active: true,
+            released: u0
         })
-        (map-set research-proposals research-id (merge research {status: "funding"}))
+        (map-set research-proposals research-id (merge research {status: "funding", pool-id: (some pool-id)}))
         (var-set next-funding-pool-id (+ pool-id u1))
         (ok pool-id)
     )
@@ -241,6 +276,56 @@
         (asserts! (>= (get total-funded pool) (get funding-goal pool)) ERR_INSUFFICIENT_FUNDS)
         (asserts! (is-eq (get status research) "funded") ERR_INVALID_STATUS)
         (try! (as-contract (stx-transfer? (get total-funded pool) tx-sender (get creator pool))))
+        (ok true)
+    )
+)
+
+(define-public (submit-milestone (research-id uint) (description (string-ascii 256)) (amount uint))
+    (let ((research (unwrap! (map-get? research-proposals research-id) ERR_NOT_FOUND))
+          (pool-id (unwrap! (get pool-id research) ERR_NOT_FOUND))
+          (pool (unwrap! (map-get? funding-pools pool-id) ERR_NOT_FOUND))
+          (milestone-id (var-get next-milestone-id)))
+        (asserts! (is-eq (get researcher research) tx-sender) ERR_UNAUTHORIZED)
+        (asserts! (is-eq (get status research) "funded") ERR_INVALID_STATUS)
+        (asserts! (> amount u0) ERR_INVALID_AMOUNT)
+        (asserts! (<= (+ (get released pool) amount) (get total-funded pool)) ERR_INSUFFICIENT_FUNDS)
+        (map-set milestones milestone-id {
+            research-id: research-id,
+            pool-id: pool-id,
+            description: description,
+            amount: amount,
+            status: "pending",
+            created-at: stacks-block-height,
+            approved-amount: u0
+        })
+        (var-set next-milestone-id (+ milestone-id u1))
+        (ok milestone-id)
+    )
+)
+
+(define-public (approve-milestone (milestone-id uint))
+    (let ((milestone (unwrap! (map-get? milestones milestone-id) ERR_NOT_FOUND))
+          (pool (unwrap! (map-get? funding-pools (get pool-id milestone)) ERR_NOT_FOUND))
+          (contribution (default-to {amount: u0} (map-get? funders {pool-id: (get pool-id milestone), funder: tx-sender}))))
+        (asserts! (> (get amount contribution) u0) ERR_UNAUTHORIZED)
+        (asserts! (is-eq (get status milestone) "pending") ERR_INVALID_STATUS)
+        (asserts! (is-none (map-get? milestone-approvals {milestone-id: milestone-id, funder: tx-sender})) ERR_ALREADY_EXISTS)
+        (map-set milestone-approvals {milestone-id: milestone-id, funder: tx-sender} true)
+        (map-set milestones milestone-id (merge milestone {approved-amount: (+ (get approved-amount milestone) (get amount contribution))}))
+        (ok true)
+    )
+)
+
+(define-public (release-milestone-funds (milestone-id uint))
+    (let ((milestone (unwrap! (map-get? milestones milestone-id) ERR_NOT_FOUND))
+          (pool (unwrap! (map-get? funding-pools (get pool-id milestone)) ERR_NOT_FOUND))
+          (research (unwrap! (map-get? research-proposals (get research-id milestone)) ERR_NOT_FOUND)))
+        (asserts! (is-eq (get researcher research) tx-sender) ERR_UNAUTHORIZED)
+        (asserts! (is-eq (get status milestone) "pending") ERR_INVALID_STATUS)
+        (asserts! (>= (get approved-amount milestone) (/ (get total-funded pool) u2)) ERR_INSUFFICIENT_FUNDS)
+        (try! (as-contract (stx-transfer? (get amount milestone) tx-sender (get creator pool))))
+        (map-set milestones milestone-id (merge milestone {status: "released"}))
+        (map-set funding-pools (get pool-id milestone) (merge pool {released: (+ (get released pool) (get amount milestone))}))
         (ok true)
     )
 )

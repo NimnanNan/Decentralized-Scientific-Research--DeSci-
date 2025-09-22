@@ -1,7 +1,3 @@
-# 🧬 Decentralized Scientific Research (DeSci) Platform
-
-## 🔬 Overview
-
 A blockchain-based platform revolutionizing scientific research through decentralized funding, transparent peer review, and open-access publishing. Built on Stacks blockchain using Clarity smart contracts.
 
 ## ✨ Key Features
@@ -11,6 +7,7 @@ A blockchain-based platform revolutionizing scientific research through decentra
 - 🎯 **Transparent Peer Review** - Record all reviews on-chain with reputation tracking
 - 👨‍🔬 **Researcher Profiles** - Build reputation through contributions and publications
 - 🏆 **Reputation System** - Earn points for reviews, publications, and funded research
+- 📅 **Milestone-Based Funding** - Release funds incrementally upon milestone completion
 
 ## 🚀 Quick Start
 
@@ -84,7 +81,28 @@ clarinet check
 (contract-call? .Decentralized-Scientific-Research--DeSci publish-research u1)
 ```
 
-## 🔍 Query Functions
+### 8. 📅 Submit Milestone
+
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci submit-milestone
+    u1
+    "Complete initial data collection and analysis"
+    u25000)
+```
+
+### 9. 👍 Approve Milestone
+
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci approve-milestone u1)
+```
+
+### 10. 💸 Release Milestone Funds
+
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci release-milestone-funds u1)
+```
+
+## � Query Functions
 
 ### Get Research Proposal
 ```clarity
@@ -101,14 +119,27 @@ clarinet check
 (contract-call? .Decentralized-Scientific-Research--DeSci get-researcher-profile 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM)
 ```
 
+### Get Milestone
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci get-milestone u1)
+```
+
+### Get Milestone Approval
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci get-milestone-approval u1 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM)
+```
+
 ## 📊 Research Lifecycle
 
 1. **🎯 Propose** - Researchers submit proposals with funding goals
-2. **💰 Fund** - Community funds promising research through tokenized pools  
+2. **💰 Fund** - Community funds promising research through tokenized pools
 3. **🔬 Research** - Conduct research once funding goal is met
-4. **📤 Submit** - Upload research papers with IPFS hash
-5. **👥 Review** - Peers provide ratings and feedback transparently
-6. **🌍 Publish** - Make research publicly available and immutable
+4. **📅 Milestones** - Submit project milestones for incremental funding
+5. **👍 Approval** - Funders approve completed milestones
+6. **💸 Release** - Receive funds upon milestone approval
+7. **📤 Submit** - Upload research papers with IPFS hash
+8. **👥 Review** - Peers provide ratings and feedback transparently
+9. **🌍 Publish** - Make research publicly available and immutable
 
 ## 🏗️ Contract Architecture
 
@@ -117,6 +148,7 @@ clarinet check
 - **Funding Pools** - Crowdfunding mechanism with deadlines
 - **Peer Reviews** - Ratings, comments, and verification status
 - **Researcher Profiles** - Reputation scores and publication history
+- **Milestones** - Phased funding checkpoints with approval tracking
 
 ### Key Functions
 - `create-researcher-profile` - Register as a researcher
@@ -124,6 +156,9 @@ clarinet check
 - `fund-research` - Contribute to research funding pools
 - `submit-peer-review` - Provide scholarly peer review
 - `publish-research` - Make research publicly available
+- `submit-milestone` - Define project milestones for funding release
+- `approve-milestone` - Funders approve milestone completion
+- `release-milestone-funds` - Disburse approved milestone funds
 
 ## 🛡️ Security Features
 
@@ -132,6 +167,8 @@ clarinet check
 - ✅ Reputation-based review verification
 - ✅ Funding goal validation
 - ✅ Status-based workflow enforcement
+- ✅ Milestone approval thresholds
+- ✅ Incremental fund release controls
 
 ## 🧪 Testing
 
