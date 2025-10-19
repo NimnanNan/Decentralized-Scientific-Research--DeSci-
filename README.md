@@ -8,6 +8,7 @@ A blockchain-based platform revolutionizing scientific research through decentra
 - 👨‍🔬 **Researcher Profiles** - Build reputation through contributions and publications
 - 🏆 **Reputation System** - Earn points for reviews, publications, and funded research
 - 📅 **Milestone-Based Funding** - Release funds incrementally upon milestone completion
+- 🔄 **Funder Refund Mechanism** - Allow funders to withdraw contributions from failed funding pools
 
 ## 🚀 Quick Start
 
@@ -100,6 +101,12 @@ clarinet check
 
 ```clarity
 (contract-call? .Decentralized-Scientific-Research--DeSci release-milestone-funds u1)
+```
+
+### 11. 🔄 Withdraw Funding Refund
+
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci withdraw-funding-refund u1)
 ```
 
 ## � Query Functions

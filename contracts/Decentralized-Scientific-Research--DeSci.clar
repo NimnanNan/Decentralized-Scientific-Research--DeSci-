@@ -330,6 +330,18 @@
     )
 )
 
+(define-public (withdraw-funding-refund (pool-id uint))
+    (let ((pool (unwrap! (map-get? funding-pools pool-id) ERR_NOT_FOUND))
+          (contribution (unwrap! (map-get? funders {pool-id: pool-id, funder: tx-sender}) ERR_NOT_FOUND)))
+        (asserts! (>= stacks-block-height (get deadline pool)) ERR_INVALID_STATUS)
+        (asserts! (< (get total-funded pool) (get funding-goal pool)) ERR_INVALID_STATUS)
+        (asserts! (> (get amount contribution) u0) ERR_INSUFFICIENT_FUNDS)
+        (try! (as-contract (stx-transfer? (get amount contribution) tx-sender tx-sender)))
+        (map-set funders {pool-id: pool-id, funder: tx-sender} {amount: u0})
+        (ok true)
+    )
+)
+
 (define-read-only (calculate-research-score (research-id uint))
     (ok u0)
 )
