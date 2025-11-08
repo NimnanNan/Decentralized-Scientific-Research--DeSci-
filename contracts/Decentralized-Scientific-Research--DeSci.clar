@@ -23,7 +23,9 @@
         status: (string-ascii 32),
         created-at: uint,
         published-hash: (optional (string-ascii 64)),
-        pool-id: (optional uint)
+        pool-id: (optional uint),
+        total-rating: uint,
+        review-count: uint
     }
 )
 
@@ -156,7 +158,9 @@
             status: "proposed",
             created-at: stacks-block-height,
             published-hash: none,
-            pool-id: none
+            pool-id: none,
+            total-rating: u0,
+            review-count: u0
         })
         (var-set next-research-id (+ research-id u1))
         (ok research-id)
@@ -247,6 +251,12 @@
         (var-set next-review-id (+ review-id u1))
         (let ((updated-reviewer (merge reviewer-profile {reputation-score: (+ (get reputation-score reviewer-profile) u1)})))
             (map-set researcher-profiles tx-sender updated-reviewer)
+        )
+        (let ((current-research (unwrap-panic (map-get? research-proposals research-id))))
+            (map-set research-proposals research-id (merge current-research {
+                total-rating: (+ (get total-rating current-research) rating),
+                review-count: (+ (get review-count current-research) u1)
+            }))
         )
         (ok review-id)
     )
@@ -343,5 +353,10 @@
 )
 
 (define-read-only (calculate-research-score (research-id uint))
-    (ok u0)
+    (let ((research (unwrap! (map-get? research-proposals research-id) ERR_NOT_FOUND)))
+        (if (> (get review-count research) u0)
+            (ok (/ (get total-rating research) (get review-count research)))
+            (ok u0)
+        )
+    )
 )

@@ -8,6 +8,7 @@ A blockchain-based platform revolutionizing scientific research through decentra
 - 👨‍🔬 **Researcher Profiles** - Build reputation through contributions and publications
 - 🏆 **Reputation System** - Earn points for reviews, publications, and funded research
 - 📅 **Milestone-Based Funding** - Release funds incrementally upon milestone completion
+- 📊 **Research Quality Scoring** - Automated calculation of research quality based on peer review ratings
 - 🔄 **Funder Refund Mechanism** - Allow funders to withdraw contributions from failed funding pools
 
 ## 🚀 Quick Start
@@ -128,6 +129,10 @@ clarinet check
 
 ### Get Milestone
 ```clarity
+### Get Research Quality Score
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci calculate-research-score u1)
+```
 (contract-call? .Decentralized-Scientific-Research--DeSci get-milestone u1)
 ```
 
@@ -161,6 +166,7 @@ clarinet check
 - `create-researcher-profile` - Register as a researcher
 - `submit-research-proposal` - Submit new research for funding
 - `fund-research` - Contribute to research funding pools
+- `calculate-research-score` - Compute average peer review rating for research quality assessment
 - `submit-peer-review` - Provide scholarly peer review
 - `publish-research` - Make research publicly available
 - `submit-milestone` - Define project milestones for funding release
