@@ -88,6 +88,11 @@
     bool
 )
 
+(define-map proposal-tags
+    {proposal-id: uint, tag: (string-ascii 32)}
+    bool
+)
+
 (define-read-only (get-research-proposal (research-id uint))
     (map-get? research-proposals research-id)
 )
@@ -350,6 +355,19 @@
         (map-set funders {pool-id: pool-id, funder: tx-sender} {amount: u0})
         (ok true)
     )
+)
+
+(define-public (add-proposal-tag (proposal-id uint) (tag (string-ascii 32)))
+    (let ((research (unwrap! (map-get? research-proposals proposal-id) ERR_NOT_FOUND)))
+        (asserts! (is-eq (get researcher research) tx-sender) ERR_UNAUTHORIZED)
+        (asserts! (is-none (map-get? proposal-tags {proposal-id: proposal-id, tag: tag})) ERR_ALREADY_EXISTS)
+        (map-set proposal-tags {proposal-id: proposal-id, tag: tag} true)
+        (ok true)
+    )
+)
+
+(define-read-only (get-proposal-tag (proposal-id uint) (tag (string-ascii 32)))
+    (map-get? proposal-tags {proposal-id: proposal-id, tag: tag})
 )
 
 (define-read-only (calculate-research-score (research-id uint))

@@ -10,6 +10,7 @@ A blockchain-based platform revolutionizing scientific research through decentra
 - 📅 **Milestone-Based Funding** - Release funds incrementally upon milestone completion
 - 📊 **Research Quality Scoring** - Automated calculation of research quality based on peer review ratings
 - 🔄 **Funder Refund Mechanism** - Allow funders to withdraw contributions from failed funding pools
+- 🏷️ **Research Proposal Tagging** - Categorize proposals with tags for enhanced discoverability and filtering
 
 ## 🚀 Quick Start
 
@@ -110,6 +111,14 @@ clarinet check
 (contract-call? .Decentralized-Scientific-Research--DeSci withdraw-funding-refund u1)
 ```
 
+### 12. 🏷️ Add Proposal Tag
+
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci add-proposal-tag
+    u1
+    "AI")
+```
+
 ## � Query Functions
 
 ### Get Research Proposal
@@ -141,6 +150,11 @@ clarinet check
 (contract-call? .Decentralized-Scientific-Research--DeSci get-milestone-approval u1 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM)
 ```
 
+### Check Proposal Tag
+```clarity
+(contract-call? .Decentralized-Scientific-Research--DeSci get-proposal-tag u1 "AI")
+```
+
 ## 📊 Research Lifecycle
 
 1. **🎯 Propose** - Researchers submit proposals with funding goals
@@ -161,6 +175,7 @@ clarinet check
 - **Peer Reviews** - Ratings, comments, and verification status
 - **Researcher Profiles** - Reputation scores and publication history
 - **Milestones** - Phased funding checkpoints with approval tracking
+- **Proposal Tags** - Tag system for categorizing research proposals
 
 ### Key Functions
 - `create-researcher-profile` - Register as a researcher
@@ -172,6 +187,8 @@ clarinet check
 - `submit-milestone` - Define project milestones for funding release
 - `approve-milestone` - Funders approve milestone completion
 - `release-milestone-funds` - Disburse approved milestone funds
+- `add-proposal-tag` - Add tags to research proposals for categorization
+- `get-proposal-tag` - Check if a tag is associated with a proposal
 
 ## 🛡️ Security Features
 
